@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tracker">
+  <title>Workout & Journal</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #38bdf8;
+      --accent-active: #0ea5e9;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 90px; }
+    header { padding: 24px 20px 12px; background: var(--card); border-bottom: 1px solid var(--border); }
+    h1 { font-size: 1.25rem; font-weight: 700; }
+    .container { padding: 16px 20px; max-width: 500px; margin: 0 auto; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    input[type="text"], input[type="date"], select, textarea {
+      width: 100%; background: #0b1120; border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px 12px; font-size: 1rem; margin-bottom: 12px; outline: none;
+    }
+    input[type="range"] { width: 100%; margin: 8px 0; accent-color: var(--accent); }
+    .checkbox-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; cursor: pointer; }
+    .checkbox-row input { width: 20px; height: 20px; accent-color: var(--accent); }
+    
+    button.btn-primary {
+      width: 100%; background: var(--accent); color: #0f172a; border: none; border-radius: 8px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s;
+    }
+    button.btn-primary:active { background: var(--accent-active); }
+    
+    .nav-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 70px; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-btn { background: none; border: none; color: var(--text-muted); font-size: 0.8rem; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+    .nav-btn.active { color: var(--accent); font-weight: 700; }
+    .history-item { border-left: 3px solid var(--accent); padding-left: 12px; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1 id="view-title">Log Workout</h1>
+  </header>
+
+  <div class="container">
+    <!-- WORKOUT TAB -->
+    <div id="tab-workout" class="tab-content active">
+      <div class="card">
+        <label>Date</label>
+        <input type="date" id="workout-date">
+
+        <label>Session Split</label>
+        <select id="workout-split">
+          <option value="Push">Push (Chest / Shoulders / Triceps)</option>
+          <option value="Pull">Pull (Back / Biceps)</option>
+          <option value="Legs">Legs (Quads / Hamstrings / Calves)</option>
+          <option value="Recovery">Active Recovery / Rest</option>
+        </select>
+
+        <label>Exercises & Sets (Dumbbells / Machines)</label>
+        <textarea id="workout-exercises" rows="5" placeholder="e.g.&#10;Incline DB Press: 3x12 @ 24kg&#10;Machine Chest Fly: 3x15&#10;Lateral Raises: 4x15"></textarea>
+
+        <label>Recovery & Posture Check</label>
+        <div class="checkbox-row">
+          <input type="checkbox" id="workout-swim">
+          <span>Completed 30-min Recovery Swim</span>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="saveWorkout()">Save Workout</button>
+    </div>
+
+    <!-- JOURNAL TAB -->
+    <div id="tab-journal" class="tab-content">
+      <div class="card">
+        <label>Date</label>
+        <input type="date" id="journal-date">
+
+        <label id="energy-label">Energy Level: 7/10</label>
+        <input type="range" id="journal-energy" min="1" max="10" value="7" oninput="updateEnergy(this.value)">
+
+        <label>Daily Reflection & Posture Log</label>
+        <textarea id="journal-notes" rows="6" placeholder="Notes on posture, core tension, physical stamina, or mental focus..."></textarea>
+      </div>
+      <button class="btn-primary" onclick="saveJournal()">Save Journal Entry</button>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="tab-history" class="tab-content">
+      <div id="history-container"></div>
+      <button class="btn-primary" style="background:#475569; margin-top: 10px;" onclick="exportData()">Export Data (JSON)</button>
+    </div>
+  </div>
+
+  <nav class="nav-bar">
+    <button class="nav-btn active" onclick="switchTab('workout')">🏋️<span>Workout</span></button>
+    <button class="nav-btn" onclick="switchTab('journal')">📖<span>Journal</span></button>
+    <button class="nav-btn" onclick="switchTab('history')">📊<span>History</span></button>
+  </nav>
+
+  <script>
+    // Set default dates
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('workout-date').value = today;
+    document.getElementById('journal-date').value = today;
+
+    function updateEnergy(val) {
+      document.getElementById('energy-label').innerText = `Energy Level: ${val}/10`;
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      event.currentTarget.classList.add('active');
+      
+      const titles = { workout: 'Log Workout', journal: 'Daily Journal', history: 'Log History' };
+      document.getElementById('view-title').innerText = titles[tab];
+
+      if (tab === 'history') loadHistory();
+    }
+
+    function saveWorkout() {
+      const entry = {
+        id: Date.now(),
+        type: 'workout',
+        date: document.getElementById('workout-date').value,
+        split: document.getElementById('workout-split').value,
+        exercises: document.getElementById('workout-exercises').value,
+        swim: document.getElementById('workout-swim').checked
+      };
+
+      const logs = JSON.parse(localStorage.getItem('logs') || '[]');
+      logs.unshift(entry);
+      localStorage.setItem('logs', JSON.stringify(logs));
+
+      document.getElementById('workout-exercises').value = '';
+      document.getElementById('workout-swim').checked = false;
+      alert('Workout saved locally!');
+    }
+
+    function saveJournal() {
+      const entry = {
+        id: Date.now(),
+        type: 'journal',
+        date: document.getElementById('journal-date').value,
+        energy: document.getElementById('journal-energy').value,
+        notes: document.getElementById('journal-notes').value
+      };
+
+      const logs = JSON.parse(localStorage.getItem('logs') || '[]');
+      logs.unshift(entry);
+      localStorage.setItem('logs', JSON.stringify(logs));
+
+      document.getElementById('journal-notes').value = '';
+      alert('Journal entry saved locally!');
+    }
+
+    function loadHistory() {
+      const container = document.getElementById('history-container');
+      const logs = JSON.parse(localStorage.getItem('logs') || '[]');
+      
+      if (logs.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); text-align:center;">No entries saved yet.</p>';
+        return;
+      }
+
+      container.innerHTML = logs.map(item => {
+        if (item.type === 'workout') {
+          return `
+            <div class="card history-item">
+              <div style="font-size:0.8rem; color:var(--text-muted);">${item.date} • WORKOUT</div>
+              <strong style="color:var(--accent);">${item.split}</strong>
+              <p style="white-space:pre-wrap; margin-top:6px; font-size:0.9rem;">${item.exercises || 'No exercise notes'}</p>
+              ${item.swim ? '<div style="margin-top:6px; font-size:0.85rem; color:#4ade80;">✓ 30-min Swim Logged</div>' : ''}
+            </div>`;
+        } else {
+          return `
+            <div class="card history-item" style="border-left-color: #a78bfa;">
+              <div style="font-size:0.8rem; color:var(--text-muted);">${item.date} • JOURNAL</div>
+              <strong>Energy: ${item.energy}/10</strong>
+              <p style="white-space:pre-wrap; margin-top:6px; font-size:0.9rem;">${item.notes || 'No notes'}</p>
+            </div>`;
+        }
+      }).join('');
+    }
+
+    function exportData() {
+      const data = localStorage.getItem('logs') || '[]';
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fitness-log-export-${today}.json`;
+      a.click();
+    }
+  </script>
+</body>
+</html>
