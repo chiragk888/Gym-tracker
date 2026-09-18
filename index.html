@@ -12,6 +12,7 @@
       --accent-cyan: #00f2fe;
       --accent-green: #00e676;
       --accent-purple: #7c4dff;
+      --accent-orange: #ffab00;
       --text-main: #f0f4f8;
       --text-muted: #8a99ad;
       --border-color: #2a3245;
@@ -19,19 +20,24 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg-main); color: var(--text-main); padding-bottom: 80px; }
+    body { background-color: var(--bg-main); color: var(--text-main); padding-bottom: 90px; }
 
     /* Header & Nav */
-    header { background: var(--bg-card); padding: 16px; text-align: center; border-bottom: 1px solid var(--border-color); sticky: top; }
+    header { background: var(--bg-card); padding: 16px; text-align: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10; }
     header h1 { font-size: 1.4rem; color: var(--accent-cyan); letter-spacing: 1px; }
 
     .nav-tabs { display: flex; justify-content: space-around; background: var(--bg-card); padding: 10px; border-bottom: 1px solid var(--border-color); }
-    .tab-btn { background: none; border: none; color: var(--text-muted); font-size: 0.9rem; font-weight: 600; padding: 8px 16px; cursor: pointer; border-radius: var(--radius); }
-    .tab-btn.active { color: var(--bg-main); background: var(--accent-cyan); }
+    .tab-btn { background: none; border: 1px solid transparent; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; padding: 8px 16px; cursor: pointer; border-radius: var(--radius); transition: all 0.2s ease; }
+    .tab-btn.active { color: var(--bg-main); background: var(--accent-cyan); border-color: var(--accent-cyan); }
 
     .container { max-width: 600px; margin: 0 auto; padding: 16px; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
+
+    /* Preset Switcher Bar */
+    .preset-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+    .preset-btn { flex: 1; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius); font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+    .preset-btn:hover { background: var(--bg-hover); border-color: var(--accent-cyan); }
 
     /* Cards & Layout */
     .card { background: var(--bg-card); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; border: 1px solid var(--border-color); }
@@ -41,10 +47,10 @@
     .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
     .metric-box { background: var(--bg-main); padding: 10px; border-radius: 8px; text-align: center; }
     .metric-box label { font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px; }
-    .metric-box input, .metric-box select { width: 100%; background: transparent; border: none; color: var(--text-main); text-align: center; font-weight: bold; }
+    .metric-box input, .metric-box select { width: 100%; background: transparent; border: none; color: var(--text-main); text-align: center; font-weight: bold; font-size: 0.9rem; }
     
     .readiness-score-bar { background: var(--bg-main); height: 10px; border-radius: 5px; overflow: hidden; margin-top: 8px; }
-    .readiness-score-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #ff4949, var(--accent-cyan), var(--accent-green)); transition: width 0.3s ease; }
+    .readiness-score-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #ff4949, var(--accent-orange), var(--accent-green)); transition: width 0.3s ease; }
 
     /* Exercise & Set Rows */
     .exercise-card { background: var(--bg-card); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; border: 1px solid var(--border-color); }
@@ -60,17 +66,17 @@
 
     .type-badge { font-size: 0.7rem; font-weight: bold; text-align: center; padding: 6px 0; border-radius: 6px; cursor: pointer; user-select: none; }
     .type-badge.working { background: rgba(124, 77, 255, 0.2); color: var(--accent-purple); border: 1px solid var(--accent-purple); }
-    .type-badge.warmup { background: rgba(255, 171, 0, 0.2); color: #ffab00; border: 1px solid #ffab00; }
+    .type-badge.warmup { background: rgba(255, 171, 0, 0.2); color: var(--accent-orange); border: 1px solid var(--accent-orange); }
 
     .btn-remove-set { background: none; border: none; color: #ff4949; font-size: 0.9rem; cursor: pointer; }
     .btn-add-set { width: 100%; padding: 8px; background: var(--bg-hover); border: 1px dashed var(--border-color); color: var(--text-muted); border-radius: 6px; cursor: pointer; font-size: 0.85rem; margin-top: 8px; }
 
     /* Rest Timer Bar */
-    .timer-banner { fixed: bottom; position: fixed; bottom: 0; left: 0; right: 0; background: #121620; border-top: 1px solid var(--border-color); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
-    .timer-display { font-size: 1.2rem; font-weight: bold; color: var(--accent-cyan); font-mono: monospace; }
-    .timer-btn { background: var(--border-color); color: var(--text-main); border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; margin-left: 6px; }
+    .timer-banner { position: fixed; bottom: 0; left: 0; right: 0; background: #121620; border-top: 1px solid var(--border-color); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+    .timer-display { font-size: 1.2rem; font-weight: bold; color: var(--accent-cyan); font-family: monospace; }
+    .timer-btn { background: var(--border-color); color: var(--text-main); border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; margin-left: 6px; font-size: 0.8rem; }
 
-    /* Progress Bars */
+    /* Analytics Progress Bars */
     .progress-group { margin-bottom: 12px; }
     .progress-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
     .progress-track { background: var(--bg-main); height: 8px; border-radius: 4px; overflow: hidden; }
@@ -84,9 +90,9 @@
   </header>
 
   <div class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('journal')">Journal</button>
-    <button class="tab-btn" onclick="switchTab('workout')">Workout</button>
-    <button class="tab-btn" onclick="switchTab('analytics')">Analytics</button>
+    <button class="tab-btn active" onclick="switchTab('journal', event)">Journal</button>
+    <button class="tab-btn" onclick="switchTab('workout', event)">Workout</button>
+    <button class="tab-btn" onclick="switchTab('analytics', event)">Analytics</button>
   </div>
 
   <div class="container">
@@ -125,17 +131,21 @@
 
     <!-- WORKOUT TAB -->
     <div id="workout" class="tab-content">
+      <div class="preset-bar">
+        <button class="preset-btn" onclick="loadPreset('morningHome')">☀️ Morning Home (30m)</button>
+        <button class="preset-btn" onclick="loadPreset('eveningGym')">🌙 Evening Gym (60m)</button>
+      </div>
       <div id="exercise-list"></div>
     </div>
 
     <!-- ANALYTICS TAB -->
     <div id="analytics" class="tab-content">
       <div class="card">
-        <div class="card-title">Weekly Focus Balance</div>
+        <div class="card-title">Weekly Focus Distribution</div>
         
         <div class="progress-group">
-          <div class="progress-label"><span>Posture & Mobility</span><span>40%</span></div>
-          <div class="progress-track"><div class="progress-fill" style="width: 40%;"></div></div>
+          <div class="progress-label"><span>Mobility & Posture</span><span>35%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width: 35%;"></div></div>
         </div>
         
         <div class="progress-group">
@@ -144,8 +154,8 @@
         </div>
 
         <div class="progress-group">
-          <div class="progress-label"><span>Hypertrophy / Volume</span><span>35%</span></div>
-          <div class="progress-track"><div class="progress-fill" style="width: 35%; background: var(--accent-green);"></div></div>
+          <div class="progress-label"><span>Stamina & Hypertrophy</span><span>40%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width: 40%; background: var(--accent-green);"></div></div>
         </div>
       </div>
     </div>
@@ -165,37 +175,84 @@
   </div>
 
   <script>
-    // Initial State
-    let exerciseSetsState = [
-      {
-        name: "Thoracic Spine Extension",
-        tag: "Posture/Mobility",
-        sets: [
-          { type: 'warmup', weight: '0', reps: '12', rpe: '6', done: false }
-        ]
-      },
-      {
-        name: "Goblet Squat",
-        tag: "Legs/Core",
-        sets: [
-          { type: 'warmup', weight: '12', reps: '10', rpe: '6', done: false },
-          { type: 'working', weight: '20', reps: '8', rpe: '8', done: false }
-        ]
-      }
-    ];
+    // Presets for Split Routine
+    const routinePresets = {
+      morningHome: [
+        {
+          name: "Thoracic Spine & World's Greatest Stretch",
+          tag: "Posture/Mobility",
+          sets: [
+            { type: 'working', weight: '0', reps: '10', rpe: '5', done: false },
+            { type: 'working', weight: '0', reps: '10', rpe: '5', done: false }
+          ]
+        },
+        {
+          name: "Deadbug / Bird-Dog Holds",
+          tag: "Core/Stability",
+          sets: [
+            { type: 'working', weight: '0', reps: '12', rpe: '6', done: false },
+            { type: 'working', weight: '0', reps: '12', rpe: '7', done: false }
+          ]
+        },
+        {
+          name: "Banded Glute Bridges & Clamshells",
+          tag: "Hip Stability",
+          sets: [
+            { type: 'working', weight: '0', reps: '15', rpe: '6', done: false },
+            { type: 'working', weight: '0', reps: '15', rpe: '7', done: false }
+          ]
+        }
+      ],
+      eveningGym: [
+        {
+          name: "Goblet Squats (Pause & Depth)",
+          tag: "Lower/Stability",
+          sets: [
+            { type: 'warmup', weight: '12', reps: '10', rpe: '5', done: false },
+            { type: 'working', weight: '20', reps: '10', rpe: '7', done: false },
+            { type: 'working', weight: '24', reps: '8', rpe: '8', done: false }
+          ]
+        },
+        {
+          name: "Cable Face Pulls & Y-Raises",
+          tag: "Posture/Upper",
+          sets: [
+            { type: 'working', weight: '15', reps: '15', rpe: '7', done: false },
+            { type: 'working', weight: '17.5', reps: '12', rpe: '8', done: false }
+          ]
+        },
+        {
+          name: "Farmers Carry / Suitcase Hold",
+          tag: "Core/Stamina",
+          sets: [
+            { type: 'working', weight: '16', reps: '45', rpe: '8', done: false },
+            { type: 'working', weight: '20', reps: '40', rpe: '9', done: false }
+          ]
+        }
+      ]
+    };
 
+    let exerciseSetsState = routinePresets.morningHome;
     let timerInterval = null;
     let timerSecondsLeft = 0;
 
-    // --- Tab Navigation ---
-    function switchTab(tabId) {
+    // --- Tab Switching ---
+    function switchTab(tabId, evt) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
-      event.target.classList.add('active');
+      if (evt && evt.target) evt.target.classList.add('active');
     }
 
-    // --- Readiness Score ---
+    // --- Load Preset Routine ---
+    function loadPreset(presetKey) {
+      if (routinePresets[presetKey]) {
+        exerciseSetsState = JSON.parse(JSON.stringify(routinePresets[presetKey]));
+        renderExercises();
+      }
+    }
+
+    // --- Readiness Calculation ---
     function calculateReadiness() {
       const sleep = parseFloat(document.getElementById('readiness-sleep').value) || 0;
       const energy = parseFloat(document.getElementById('readiness-energy').value) || 0;
@@ -211,14 +268,15 @@
       document.getElementById('readiness-fill').style.width = `${total}%`;
 
       const hint = document.getElementById('readiness-hint');
-      if (total >= 80) hint.innerText = "Prime condition: Push for progressive overload today.";
-      else if (total >= 60) hint.innerText = "Moderate readiness: Stick to scheduled volume.";
-      else hint.innerText = "Low readiness: Consider dropping 1 working set per exercise.";
+      if (total >= 80) hint.innerText = "Prime condition: Push for quality depth and weight progression.";
+      else if (total >= 60) hint.innerText = "Moderate readiness: Stick to scheduled working reps.";
+      else hint.innerText = "Low readiness: Consider dropping 1 working set per movement.";
     }
 
-    // --- Exercise & Sets Render ---
+    // --- Exercise & Set Rendering ---
     function renderExercises() {
       const list = document.getElementById('exercise-list');
+      if (!list) return;
       list.innerHTML = '';
 
       exerciseSetsState.forEach((ex, exIndex) => {
@@ -230,7 +288,7 @@
             <span class="tag">${ex.tag}</span>
           </div>
           <div class="set-row" style="font-size:0.7rem; color:var(--text-muted); text-align:center; font-weight:bold;">
-            <span>STATUS</span><span>TYPE</span><span>KG/LBS</span><span>REPS</span><span>RPE</span><span></span>
+            <span>DONE</span><span>TYPE</span><span>KG/LBS</span><span>REPS</span><span>RPE</span><span></span>
           </div>
           <div id="sets-container-${exIndex}"></div>
           <button class="btn-add-set" onclick="addSetRow(${exIndex}, 'working')">+ Add Working Set</button>
@@ -249,7 +307,7 @@
       sets.forEach((setObj, s) => {
         const weight = parseFloat(setObj.weight) || 0;
         const reps = parseInt(setObj.reps) || 0;
-        // Estimated 1RM via Epley Formula: e1RM = w * (1 + r / 30)
+        // Estimated 1RM calculation (Epley)
         const e1rm = (weight > 0 && reps > 0) ? Math.round(weight * (1 + reps / 30)) : 0;
 
         html += `
@@ -277,7 +335,7 @@
       const set = exerciseSetsState[exIndex].sets[setIndex];
       set.done = !set.done;
       if (set.done) {
-        startTimer(90); // Trigger rest timer automatically
+        startTimer(60); // Auto-starts a 60s timer on set completion
       }
       renderSetRowsForExercise(exIndex);
     }
@@ -307,7 +365,7 @@
       renderSetRowsForExercise(exIndex);
     }
 
-    // --- Rest Timer ---
+    // --- Timer Controls ---
     function startTimer(seconds) {
       clearInterval(timerInterval);
       timerSecondsLeft = seconds;
@@ -342,7 +400,7 @@
         `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
 
-    // --- Local Storage Auto-Save ---
+    // --- Persistence ---
     function saveDraft() {
       localStorage.setItem('aurafit_workout_draft', JSON.stringify(exerciseSetsState));
     }
