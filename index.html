@@ -30,7 +30,7 @@
     label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
     
     input[type="text"], input[type="number"], input[type="date"], select, textarea {
-      width: 100%; background: #000; border: 1px solid var(--border); border-radius: 12px; color: var(--text); padding: 14px 16px; font-size: 1rem; margin-bottom: 16px; outline: none; border: 1px solid var(--border); appearance: none;
+      width: 100%; background: #000; border: 1px solid var(--border); border-radius: 12px; color: var(--text); padding: 14px 16px; font-size: 1rem; margin-bottom: 16px; outline: none; appearance: none;
     }
     input:focus, select:focus, textarea:focus { border-color: var(--accent-solid); }
     select { background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 16px top 50%; background-size: 10px auto; }
@@ -247,9 +247,14 @@
       
       if (split !== 'Recovery') {
         for (var i = 0; i < currentExercises.length; i++) {
-          var weight = document.getElementById('w-' + i).value;
-          var sets = document.getElementById('s-' + i).value;
-          var reps = document.getElementById('r-' + i).value;
+          var wEl = document.getElementById('w-' + i);
+          var sEl = document.getElementById('s-' + i);
+          var rEl = document.getElementById('r-' + i);
+          
+          var weight = wEl ? wEl.value : '';
+          var sets = sEl ? sEl.value : '';
+          var reps = rEl ? rEl.value : '';
+
           if (weight || sets || reps) {
             exerciseData.push({ name: currentExercises[i], weight: weight, sets: sets, reps: reps });
           }
@@ -343,4 +348,37 @@
           fullHtml += '<div class="card history-item" style="border-left-color: var(--success);"><div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">' + (item.date||'') + ' • JOURNAL</div><strong style="display:block; margin: 8px 0; font-size:1.1rem;">Energy: ' + (item.energy||7) + '/10</strong><div style="margin-bottom: 8px;">' + (item.sleep ? '<span style="font-size:0.8rem; background:rgba(16,185,129,0.2); color:#10b981; padding: 2px 6px; border-radius: 4px; margin-right: 6px;">🌙 Sleep</span>' : '') + (item.food ? '<span style="font-size:0.8rem; background:rgba(16,185,129,0.2); color:#10b981; padding: 2px 6px; border-radius: 4px;">🍳 Breakfast</span>' : '') + '</div><p style="white-space:pre-wrap; font-size:0.95rem;">' + (item.notes || 'No notes') + '</p></div>';
         }
       }
-      container.innerHTML = 
+      container.innerHTML = fullHtml;
+    }
+
+    function exportData() {
+      var data = localStorage.getItem('logs') || '[]';
+      var blob = new Blob([data], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'aurafit-logs-' + new Date().toISOString().slice(0, 10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function emergencyReset() {
+      if (confirm("Are you sure you want to delete all saved workout and journal logs? This cannot be undone.")) {
+        localStorage.removeItem('logs');
+        renderExercises();
+        loadHistory();
+        updateChart();
+        alert("App data reset successfully.");
+      }
+    }
+
+    // Initialize defaults on load
+    document.addEventListener('DOMContentLoaded', function() {
+      var today = new Date().toISOString().substring(0, 10);
+      document.getElementById('workout-date').value = today;
+      document.getElementById('journal-date').value = today;
+      renderExercises();
+    });
+  </script>
+</body>
+</html>
