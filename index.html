@@ -7,13 +7,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="AuraFit">
   <title>Premium Workout & Journal</title>
-  <!-- Import Chart.js for Progress Visualization -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js set to defer so it doesn't block the app from loading -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <style>
     :root {
       --bg: #09090b; 
       --card: #18181b; 
-      --card-hover: #27272a;
       --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
       --accent-solid: #8b5cf6;
       --text: #f8fafc;
@@ -172,9 +171,9 @@
   </div>
 
   <nav class="nav-bar">
-    <button class="nav-btn active" onclick="switchTab('workout')"><span class="icon">🏋️</span>Workout</button>
-    <button class="nav-btn" onclick="switchTab('journal')"><span class="icon">📖</span>Journal</button>
-    <button class="nav-btn" onclick="switchTab('history')"><span class="icon">📊</span>History</button>
+    <button class="nav-btn active" id="btn-workout" onclick="switchTab('workout')"><span class="icon">🏋️</span>Workout</button>
+    <button class="nav-btn" id="btn-journal" onclick="switchTab('journal')"><span class="icon">📖</span>Journal</button>
+    <button class="nav-btn" id="btn-history" onclick="switchTab('history')"><span class="icon">📊</span>History</button>
   </nav>
 
   <script>
@@ -190,7 +189,10 @@
     let timerInterval;
     let progressChart;
 
-    const today = new Date().toISOString().split('T')[0];
+    // FIX 2: Create a local timezone date string (Fixes IST midnight bug)
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    
     document.getElementById('workout-date').value = today;
     document.getElementById('journal-date').value = today;
 
@@ -200,12 +202,13 @@
       document.getElementById('energy-label').innerText = `Energy Level: ${val}/10`;
     }
 
+    // FIX 1: Removed reliance on global "event" which crashes Android browsers
     function switchTab(tab) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
       
       document.getElementById(`tab-${tab}`).classList.add('active');
-      event.currentTarget.classList.add('active');
+      document.getElementById(`btn-${tab}`).classList.add('active');
       
       const titles = { workout: 'Log Workout', journal: 'Daily Journal', history: 'Log & Progress' };
       document.getElementById('view-title').innerText = titles[tab];
@@ -308,7 +311,6 @@
       alert('Journal entry saved successfully!');
     }
 
-    // --- Rest Timer Logic ---
     function startTimer(seconds) {
       clearInterval(timerInterval);
       let timeLeft = seconds;
@@ -331,8 +333,10 @@
       document.getElementById('timer-display').innerText = `${m < 10 ? '0' : ''}${m}:${rem < 10 ? '0' : ''}${rem}`;
     }
 
-    // --- Charting Logic ---
     function updateChart() {
+      // FIX 4: Prevent app crash if Chart.js fails to load due to no internet
+      if (typeof Chart === 'undefined') return; 
+
       const exName = document.getElementById('chart-exercise').value;
       const logs = JSON.parse(localStorage.getItem('logs') || '[]').reverse(); 
       
@@ -343,10 +347,9 @@
         if (log.type === 'workout' && log.exercises) {
           const ex = log.exercises.find(e => e.name.includes(exName));
           if (ex && ex.weight) {
-            // Attempt to parse numerical weight from strings like "24kg"
             const numWeight = parseFloat(ex.weight);
             if (!isNaN(numWeight)) {
-              labels.push(log.date.substring(5)); // Show MM-DD
+              labels.push(log.date.substring(5));
               dataPoints.push(numWeight);
             }
           }
@@ -404,9 +407,4 @@
             <div class="card history-item">
               <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; letter-spacing:1px;">${item.date} • WORKOUT</div>
               <strong style="color:var(--accent-solid); display:block; margin: 8px 0; font-size:1.1rem;">${item.split}</strong>
-              <div style="font-size:0.95rem; color:var(--text); line-height: 1.5;">${exHtml || 'No specific exercises logged'}</div>
-              ${item.swim ? '<div style="margin-top:12px; font-size:0.85rem; color:var(--success); font-weight:600;">✓ 30-min Swim Logged</div>' : ''}
-            </div>`;
-        } else {
-          return `
-            <div class="card history-item" style="border-left-color
+              <div style="font-size:0.95rem; color:var(--text); line-height: 1.5;">${exHtml || 'No specific ex
