@@ -7,7 +7,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="AuraFit">
   <title>Premium Workout & Journal</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <style>
     :root {
       --bg: #09090b; 
@@ -25,11 +24,11 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg); color: var(--text); padding-bottom: 100px; -webkit-font-smoothing: antialiased; }
     
-    header { padding: 40px 20px 20px; background: var(--bg); position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
+    header { padding: 40px 20px 20px; background: var(--bg); position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
     h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.5px; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin:0; }
     .version-badge { background: #27272a; color: #a1a1aa; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
     
-    .container { padding: 0 20px; max-width: 500px; margin: 0 auto; }
+    .container { padding: 20px; max-width: 500px; margin: 0 auto; }
     
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .tab-content { display: none; animation: fadeIn 0.3s ease-out forwards; }
@@ -80,7 +79,7 @@
 
   <header>
     <h1 id="view-title">Log Workout</h1>
-    <div class="version-badge">v5.0</div>
+    <div class="version-badge">v5.1</div>
   </header>
 
   <div class="container">
@@ -154,16 +153,18 @@
 
     <!-- HISTORY TAB -->
     <div id="tab-history" class="tab-content">
+      
+      <!-- Native Progress Tracker -->
       <div class="card">
-        <label>Progress Chart</label>
-        <select id="chart-exercise" onchange="updateChart()" style="margin-bottom: 20px;">
+        <label>Progress Tracker</label>
+        <select id="chart-exercise" onchange="updateChart()" style="margin-bottom: 16px;">
           <option value="Plamax Machine Chest Press">Plamax Machine Chest Press</option>
           <option value="Plamax Seated Leg Press">Plamax Seated Leg Press</option>
           <option value="Dumbbell RDLs">Dumbbell RDLs</option>
           <option value="Hyperextension Bench">Hyperextension Bench</option>
           <option value="Lat Pulldown Machine">Lat Pulldown Machine</option>
         </select>
-        <canvas id="progressChart" height="220"></canvas>
+        <div id="progressChart"></div>
       </div>
 
       <div id="history-container"></div>
@@ -180,14 +181,13 @@
   </nav>
 
   <script>
-    // Global Error Catcher - If it crashes, it will tell you exactly why on screen
     window.onerror = function(msg, url, lineNo, columnNo, error) {
-      alert("CRASH DETECTED: " + msg + " (Line " + lineNo + ")");
+      alert("CRASH DETECTED: " + msg);
       return false;
     };
 
     function emergencyReset() {
-      if(confirm("WARNING: This will delete corrupted save data to fix the app. Continue?")) {
+      if(confirm("WARNING: This will delete saved data to fix the app. Continue?")) {
         localStorage.clear();
         alert("Data cleared. The app will now reload.");
         window.location.reload();
@@ -201,7 +201,6 @@
         var parsed = JSON.parse(data);
         return Array.isArray(parsed) ? parsed : [];
       } catch (e) {
-        console.error("Cache read error");
         return [];
       }
     }
@@ -216,24 +215,21 @@
 
     var currentSplitExercises = [];
     var timerInterval;
-    var progressChart;
 
-    // Wait for the phone to finish drawing the HTML before running JS
-    document.addEventListener("DOMContentLoaded", function() {
-      try {
-        var d = new Date();
-        var mm = ('0' + (d.getMonth() + 1)).slice(-2);
-        var dd = ('0' + d.getDate()).slice(-2);
-        var today = d.getFullYear() + '-' + mm + '-' + dd;
-        
-        document.getElementById('workout-date').value = today;
-        document.getElementById('journal-date').value = today;
+    // IMMEDIATE STARTUP (No waiting for external downloads)
+    try {
+      var d = new Date();
+      var mm = ('0' + (d.getMonth() + 1)).slice(-2);
+      var dd = ('0' + d.getDate()).slice(-2);
+      var today = d.getFullYear() + '-' + mm + '-' + dd;
+      
+      document.getElementById('workout-date').value = today;
+      document.getElementById('journal-date').value = today;
 
-        renderExercises();
-      } catch(e) {
-        alert("Startup Error: " + e.message);
-      }
-    });
+      renderExercises();
+    } catch(e) {
+      alert("Startup Error: " + e.message);
+    }
 
     function updateEnergy(val) {
       document.getElementById('energy-label').innerText = 'Energy Level: ' + val + '/10';
@@ -414,15 +410,16 @@
 
     function updateChart() {
       try {
-        if (typeof Chart === 'undefined') return; 
-
         var exName = document.getElementById('chart-exercise').value;
-        var logs = getSafeLogs().reverse(); 
-        
-        var labels = [];
-        var dataPoints = [];
+        var logs = getSafeLogs(); 
+        var displayHtml = '';
+        var count = 0;
 
         for (var i = 0; i < logs.length; i++) {
           var log = logs[i];
           if (log && log.type === 'workout' && log.exercises) {
-            for (var j = 0; j < log.exerci
+            for (var j = 0; j < log.exercises.length; j++) {
+              var ex = log.exercises[j];
+              if (ex && ex.name && ex.name.indexOf(exName) !== -1 && ex.weight) {
+                var safeDate = (log.date || '').substring(5); // Show MM-DD
+                displayHtml += '<div style="background:#000; padding:12px 16px; margin-bottom:8px; border-radius:8px; border: 1px solid var(--border
