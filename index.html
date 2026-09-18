@@ -144,18 +144,18 @@
         <div class="card-title">Weekly Focus Distribution</div>
         
         <div class="progress-group">
-          <div class="progress-label"><span>Mobility & Posture</span><span>35%</span></div>
+          <div class="progress-label"><span>Thoracic & Mobility</span><span>35%</span></div>
           <div class="progress-track"><div class="progress-fill" style="width: 35%;"></div></div>
         </div>
         
         <div class="progress-group">
-          <div class="progress-label"><span>Core & Stability</span><span>25%</span></div>
-          <div class="progress-track"><div class="progress-fill" style="width: 25%; background: var(--accent-purple);"></div></div>
+          <div class="progress-label"><span>Core & Stability</span><span>30%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width: 30%; background: var(--accent-purple);"></div></div>
         </div>
 
         <div class="progress-group">
-          <div class="progress-label"><span>Stamina & Hypertrophy</span><span>40%</span></div>
-          <div class="progress-track"><div class="progress-fill" style="width: 40%; background: var(--accent-green);"></div></div>
+          <div class="progress-label"><span>Stamina & Gym Strength</span><span>35%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width: 35%; background: var(--accent-green);"></div></div>
         </div>
       </div>
     </div>
@@ -175,37 +175,37 @@
   </div>
 
   <script>
-    // Presets for Split Routine
+    // Presets configured for 30m Morning Home & 60m Evening Gym split
     const routinePresets = {
       morningHome: [
         {
-          name: "Thoracic Spine & World's Greatest Stretch",
+          name: "Thoracic Spine Mobility & Extensions",
           tag: "Posture/Mobility",
           sets: [
-            { type: 'working', weight: '0', reps: '10', rpe: '5', done: false },
-            { type: 'working', weight: '0', reps: '10', rpe: '5', done: false }
+            { type: 'working', weight: '0', reps: '12', rpe: '5', done: false },
+            { type: 'working', weight: '0', reps: '12', rpe: '5', done: false }
           ]
         },
         {
-          name: "Deadbug / Bird-Dog Holds",
-          tag: "Core/Stability",
+          name: "Deadbugs & Bird-Dog Holds",
+          tag: "Core Activation",
           sets: [
             { type: 'working', weight: '0', reps: '12', rpe: '6', done: false },
-            { type: 'working', weight: '0', reps: '12', rpe: '7', done: false }
+            { type: 'working', weight: '0', reps: '12', rpe: '6', done: false }
           ]
         },
         {
-          name: "Banded Glute Bridges & Clamshells",
-          tag: "Hip Stability",
+          name: "Bodyweight Stamina & Glute Activation",
+          tag: "Stability/Stamina",
           sets: [
-            { type: 'working', weight: '0', reps: '15', rpe: '6', done: false },
+            { type: 'working', weight: '0', reps: '15', rpe: '7', done: false },
             { type: 'working', weight: '0', reps: '15', rpe: '7', done: false }
           ]
         }
       ],
       eveningGym: [
         {
-          name: "Goblet Squats (Pause & Depth)",
+          name: "Goblet Squats",
           tag: "Lower/Stability",
           sets: [
             { type: 'warmup', weight: '12', reps: '10', rpe: '5', done: false },
@@ -214,7 +214,15 @@
           ]
         },
         {
-          name: "Cable Face Pulls & Y-Raises",
+          name: "Reverse Lunges",
+          tag: "Legs/Balance",
+          sets: [
+            { type: 'working', weight: '14', reps: '10', rpe: '7', done: false },
+            { type: 'working', weight: '16', reps: '10', rpe: '8', done: false }
+          ]
+        },
+        {
+          name: "Cable Face Pulls",
           tag: "Posture/Upper",
           sets: [
             { type: 'working', weight: '15', reps: '15', rpe: '7', done: false },
@@ -222,11 +230,11 @@
           ]
         },
         {
-          name: "Farmers Carry / Suitcase Hold",
-          tag: "Core/Stamina",
+          name: "Suitcase Carries & Core Stability",
+          tag: "Core/Endurance",
           sets: [
-            { type: 'working', weight: '16', reps: '45', rpe: '8', done: false },
-            { type: 'working', weight: '20', reps: '40', rpe: '9', done: false }
+            { type: 'working', weight: '18', reps: '45', rpe: '8', done: false },
+            { type: 'working', weight: '20', reps: '45', rpe: '8', done: false }
           ]
         }
       ]
@@ -307,7 +315,7 @@
       sets.forEach((setObj, s) => {
         const weight = parseFloat(setObj.weight) || 0;
         const reps = parseInt(setObj.reps) || 0;
-        // Estimated 1RM calculation (Epley)
+        // Estimated 1RM calculation (Epley formula)
         const e1rm = (weight > 0 && reps > 0) ? Math.round(weight * (1 + reps / 30)) : 0;
 
         html += `
@@ -335,7 +343,7 @@
       const set = exerciseSetsState[exIndex].sets[setIndex];
       set.done = !set.done;
       if (set.done) {
-        startTimer(60); // Auto-starts a 60s timer on set completion
+        startTimer(60); // Auto-starts a 60s rest timer on set completion
       }
       renderSetRowsForExercise(exIndex);
     }
