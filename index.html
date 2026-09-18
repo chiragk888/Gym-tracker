@@ -7,7 +7,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="AuraFit">
   <title>Premium Workout & Journal</title>
-  <!-- Chart.js set to defer so it doesn't block the app from loading -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <style>
     :root {
@@ -177,7 +176,20 @@
   </nav>
 
   <script>
-    const routines = {
+    // DEFENSIVE DESIGN: Safe LocalStorage Getter
+    function getSafeLogs() {
+      try {
+        var data = localStorage.getItem('logs');
+        if (!data) return [];
+        var parsed = JSON.parse(data);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        console.error("Cache read error protected.");
+        return [];
+      }
+    }
+
+    var routines = {
       "Morning Day A": ["Thoracic Spine Foam Rolling (Release)", "Cat-Cow Stretches (Mobility)", "Wall Angels (Mobility)", "Banded Pull-Aparts (Activation)", "Banded Face Pulls (Activation)"],
       "Morning Day B": ["IT Band & Quad Foam Rolling (Release)", "90/90 Hip Stretches (Mobility)", "Glute Bridges (Mobility)", "Banded Squats (Activation)", "Forearm Plank (Activation)"],
       "Gym Day A": ["Lat Pulldown Machine (Upper back width)", "Cable Crossover / Low Row (Posture)", "Plamax Machine Chest Press (Slow stretch)", "Hyperextension Bench (Lower back endurance)", "Incline Treadmill Walk (Leg/lung stamina)"],
@@ -185,13 +197,15 @@
       "Recovery": []
     };
 
-    let currentSplitExercises = [];
-    let timerInterval;
-    let progressChart;
+    var currentSplitExercises = [];
+    var timerInterval;
+    var progressChart;
 
-    // FIX 2: Create a local timezone date string (Fixes IST midnight bug)
-    const d = new Date();
-    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    // DEFENSIVE DESIGN: Safe Date Formatting (No modern padStart)
+    var d = new Date();
+    var mm = ('0' + (d.getMonth() + 1)).slice(-2);
+    var dd = ('0' + d.getDate()).slice(-2);
+    var today = d.getFullYear() + '-' + mm + '-' + dd;
     
     document.getElementById('workout-date').value = today;
     document.getElementById('journal-date').value = today;
@@ -199,18 +213,25 @@
     renderExercises();
 
     function updateEnergy(val) {
-      document.getElementById('energy-label').innerText = `Energy Level: ${val}/10`;
+      document.getElementById('energy-label').innerText = 'Energy Level: ' + val + '/10';
     }
 
-    // FIX 1: Removed reliance on global "event" which crashes Android browsers
+    // DEFENSIVE DESIGN: Safe Iteration loops instead of modern NodeList.forEach
     function switchTab(tab) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      var tabContents = document.querySelectorAll('.tab-content');
+      for (var i = 0; i < tabContents.length; i++) {
+        tabContents[i].classList.remove('active');
+      }
       
-      document.getElementById(`tab-${tab}`).classList.add('active');
-      document.getElementById(`btn-${tab}`).classList.add('active');
+      var navBtns = document.querySelectorAll('.nav-btn');
+      for (var j = 0; j < navBtns.length; j++) {
+        navBtns[j].classList.remove('active');
+      }
       
-      const titles = { workout: 'Log Workout', journal: 'Daily Journal', history: 'Log & Progress' };
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.getElementById('btn-' + tab).classList.add('active');
+      
+      var titles = { workout: 'Log Workout', journal: 'Daily Journal', history: 'Log & Progress' };
       document.getElementById('view-title').innerText = titles[tab];
 
       if (tab === 'history') {
@@ -220,151 +241,184 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function getLastWorkout(split) {
-      const logs = JSON.parse(localStorage.getItem('logs') || '[]');
-      return logs.find(log => log.type === 'workout' && log.split === split);
-    }
-
     function renderExercises() {
-      const split = document.getElementById('workout-split').value;
-      const container = document.getElementById('exercise-list');
-      const routineCard = document.getElementById('routine-container');
+      var split = document.getElementById('workout-split').value;
+      var container = document.getElementById('exercise-list');
+      var routineCard = document.getElementById('routine-container');
       
       currentSplitExercises = routines[split];
 
-      if (currentSplitExercises.length === 0) {
+      if (!currentSplitExercises || currentSplitExercises.length === 0) {
         routineCard.style.display = 'none';
         return;
       }
 
       routineCard.style.display = 'block';
-      const lastWorkout = getLastWorkout(split);
-      let html = '';
+      
+      // Find last workout safely
+      var logs = getSafeLogs();
+      var lastWorkout = null;
+      for (var p = 0; p < logs.length; p++) {
+        if (logs[p].type === 'workout' && logs[p].split === split) {
+          lastWorkout = logs[p];
+          break;
+        }
+      }
 
-      currentSplitExercises.forEach((ex, index) => {
-        let prevText = "No previous data logged.";
+      var html = '';
+      for (var i = 0; i < currentSplitExercises.length; i++) {
+        var ex = currentSplitExercises[i];
+        var prevText = "No previous data logged.";
+        
         if (lastWorkout && lastWorkout.exercises) {
-          const prevEx = lastWorkout.exercises.find(e => e.name === ex);
-          if (prevEx && (prevEx.weight || prevEx.sets || prevEx.reps)) {
-            prevText = `Last: ${prevEx.weight || '-'} | ${prevEx.sets || '-'} sets | ${prevEx.reps || '-'}`;
+          for (var k = 0; k < lastWorkout.exercises.length; k++) {
+            if (lastWorkout.exercises[k].name === ex) {
+              var eData = lastWorkout.exercises[k];
+              if (eData.weight || eData.sets || eData.reps) {
+                prevText = 'Last: ' + (eData.weight || '-') + ' | ' + (eData.sets || '-') + ' sets | ' + (eData.reps || '-');
+              }
+              break;
+            }
           }
         }
 
-        html += `
-          <div class="exercise-item">
-            <div class="ex-name">${ex}</div>
-            <div class="ex-prev">${prevText}</div>
-            <div class="ex-inputs">
-              <div class="input-group"><label>Load/Band</label><input type="text" id="w-${index}" placeholder="-"></div>
-              <div class="input-group"><label>Sets</label><input type="number" id="s-${index}" placeholder="0"></div>
-              <div class="input-group"><label>Reps/Time</label><input type="text" id="r-${index}" placeholder="-"></div>
-            </div>
-          </div>
-        `;
-      });
+        html += '<div class="exercise-item">' +
+                  '<div class="ex-name">' + ex + '</div>' +
+                  '<div class="ex-prev">' + prevText + '</div>' +
+                  '<div class="ex-inputs">' +
+                    '<div class="input-group"><label>Load/Band</label><input type="text" id="w-' + i + '" placeholder="-"></div>' +
+                    '<div class="input-group"><label>Sets</label><input type="number" id="s-' + i + '" placeholder="0"></div>' +
+                    '<div class="input-group"><label>Reps/Time</label><input type="text" id="r-' + i + '" placeholder="-"></div>' +
+                  '</div>' +
+                '</div>';
+      }
       container.innerHTML = html;
     }
 
     function saveWorkout() {
-      const split = document.getElementById('workout-split').value;
-      const exerciseData = [];
+      var split = document.getElementById('workout-split').value;
+      var exerciseData = [];
       
       if (split !== 'Recovery') {
-        currentSplitExercises.forEach((ex, index) => {
-          const weight = document.getElementById(`w-${index}`).value;
-          const sets = document.getElementById(`s-${index}`).value;
-          const reps = document.getElementById(`r-${index}`).value;
-          if (weight || sets || reps) exerciseData.push({ name: ex, weight, sets, reps });
-        });
+        for (var i = 0; i < currentSplitExercises.length; i++) {
+          var weight = document.getElementById('w-' + i).value;
+          var sets = document.getElementById('s-' + i).value;
+          var reps = document.getElementById('r-' + i).value;
+          if (weight || sets || reps) {
+            exerciseData.push({ name: currentSplitExercises[i], weight: weight, sets: sets, reps: reps });
+          }
+        }
       }
 
-      const entry = {
-        id: Date.now(), type: 'workout', date: document.getElementById('workout-date').value,
-        split: split, exercises: exerciseData, swim: document.getElementById('workout-swim').checked
+      var entry = {
+        id: new Date().getTime(), 
+        type: 'workout', 
+        date: document.getElementById('workout-date').value,
+        split: split, 
+        exercises: exerciseData, 
+        swim: document.getElementById('workout-swim').checked
       };
 
-      const logs = JSON.parse(localStorage.getItem('logs') || '[]');
-      logs.unshift(entry);
-      localStorage.setItem('logs', JSON.stringify(logs));
+      try {
+        var logs = getSafeLogs();
+        logs.unshift(entry);
+        localStorage.setItem('logs', JSON.stringify(logs));
+      } catch (e) {
+        alert("Failed to save. Ensure your browser is not in private mode.");
+      }
 
       renderExercises();
       document.getElementById('workout-swim').checked = false;
-      if (navigator.vibrate) navigator.vibrate(50);
+      try { if (navigator.vibrate) navigator.vibrate(50); } catch(e){}
       alert('Workout saved successfully!');
     }
 
     function saveJournal() {
-      const entry = {
-        id: Date.now(), type: 'journal', date: document.getElementById('journal-date').value,
-        energy: document.getElementById('journal-energy').value, notes: document.getElementById('journal-notes').value,
-        sleep: document.getElementById('habit-sleep').checked, food: document.getElementById('habit-food').checked
+      var entry = {
+        id: new Date().getTime(), 
+        type: 'journal', 
+        date: document.getElementById('journal-date').value,
+        energy: document.getElementById('journal-energy').value, 
+        notes: document.getElementById('journal-notes').value,
+        sleep: document.getElementById('habit-sleep').checked, 
+        food: document.getElementById('habit-food').checked
       };
 
-      const logs = JSON.parse(localStorage.getItem('logs') || '[]');
-      logs.unshift(entry);
-      localStorage.setItem('logs', JSON.stringify(logs));
+      try {
+        var logs = getSafeLogs();
+        logs.unshift(entry);
+        localStorage.setItem('logs', JSON.stringify(logs));
+      } catch (e) {
+        alert("Failed to save. Ensure your browser is not in private mode.");
+      }
 
       document.getElementById('journal-notes').value = '';
       document.getElementById('habit-sleep').checked = false;
       document.getElementById('habit-food').checked = false;
-      if (navigator.vibrate) navigator.vibrate(50);
+      try { if (navigator.vibrate) navigator.vibrate(50); } catch(e){}
       alert('Journal entry saved successfully!');
     }
 
     function startTimer(seconds) {
       clearInterval(timerInterval);
-      let timeLeft = seconds;
+      var timeLeft = seconds;
       updateTimerDisplay(timeLeft);
       
-      timerInterval = setInterval(() => {
+      timerInterval = setInterval(function() {
         timeLeft--;
         updateTimerDisplay(timeLeft);
-        if(timeLeft <= 0) {
+        if (timeLeft <= 0) {
           clearInterval(timerInterval);
-          if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+          try { if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]); } catch(e){}
           alert("Rest complete! Time for the next set.");
         }
       }, 1000);
     }
 
     function updateTimerDisplay(s) {
-      const m = Math.floor(s / 60);
-      const rem = s % 60;
-      document.getElementById('timer-display').innerText = `${m < 10 ? '0' : ''}${m}:${rem < 10 ? '0' : ''}${rem}`;
+      var m = Math.floor(s / 60);
+      var rem = s % 60;
+      var minStr = m < 10 ? '0' + m : m;
+      var secStr = rem < 10 ? '0' + rem : rem;
+      document.getElementById('timer-display').innerText = minStr + ':' + secStr;
     }
 
     function updateChart() {
-      // FIX 4: Prevent app crash if Chart.js fails to load due to no internet
       if (typeof Chart === 'undefined') return; 
 
-      const exName = document.getElementById('chart-exercise').value;
-      const logs = JSON.parse(localStorage.getItem('logs') || '[]').reverse(); 
+      var exName = document.getElementById('chart-exercise').value;
+      var logs = getSafeLogs().reverse(); 
       
-      const labels = [];
-      const dataPoints = [];
+      var labels = [];
+      var dataPoints = [];
 
-      logs.forEach(log => {
+      for (var i = 0; i < logs.length; i++) {
+        var log = logs[i];
         if (log.type === 'workout' && log.exercises) {
-          const ex = log.exercises.find(e => e.name.includes(exName));
-          if (ex && ex.weight) {
-            const numWeight = parseFloat(ex.weight);
-            if (!isNaN(numWeight)) {
-              labels.push(log.date.substring(5));
-              dataPoints.push(numWeight);
+          for (var j = 0; j < log.exercises.length; j++) {
+            if (log.exercises[j].name.indexOf(exName) !== -1) {
+              var ex = log.exercises[j];
+              if (ex.weight) {
+                var numWeight = parseFloat(ex.weight);
+                if (!isNaN(numWeight)) {
+                  labels.push(log.date.substring(5));
+                  dataPoints.push(numWeight);
+                }
+              }
             }
           }
         }
-      });
+      }
 
       if (progressChart) progressChart.destroy();
 
-      const ctx = document.getElementById('progressChart').getContext('2d');
+      var ctx = document.getElementById('progressChart').getContext('2d');
       progressChart = new Chart(ctx, {
         type: 'line',
         data: {
           labels: labels.length ? labels : ['No Data'],
           datasets: [{
-            label: `Load Progression`,
+            label: 'Load Progression',
             data: dataPoints.length ? dataPoints : [0],
             borderColor: '#8b5cf6',
             backgroundColor: 'rgba(139, 92, 246, 0.1)',
@@ -380,31 +434,4 @@
           plugins: { legend: { display: false } },
           scales: {
             y: { grid: { color: '#27272a' }, ticks: { color: '#a1a1aa' }, beginAtZero: false },
-            x: { grid: { color: '#27272a' }, ticks: { color: '#a1a1aa' } }
-          }
-        }
-      });
-    }
-
-    function loadHistory() {
-      const container = document.getElementById('history-container');
-      const logs = JSON.parse(localStorage.getItem('logs') || '[]');
-      
-      if (logs.length === 0) {
-        container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 40px 0;">No entries saved yet.</p>';
-        return;
-      }
-
-      container.innerHTML = logs.map(item => {
-        if (item.type === 'workout') {
-          let exHtml = '';
-          if (item.exercises && item.exercises.length > 0) {
-            exHtml = item.exercises.map(e => 
-              `<div style="margin-bottom: 4px;">• <span style="color:var(--text-muted)">${e.name.split('(')[0].trim()}:</span> <strong>${e.weight || 'BW'}</strong> (${e.sets || '-'} x ${e.reps || '-'})</div>`
-            ).join('');
-          }
-          return `
-            <div class="card history-item">
-              <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; letter-spacing:1px;">${item.date} • WORKOUT</div>
-              <strong style="color:var(--accent-solid); display:block; margin: 8px 0; font-size:1.1rem;">${item.split}</strong>
-              <div style="font-size:0.95rem; color:var(--text); line-height: 1.5;">${exHtml || 'No specific ex
+            x: { grid: { color: '#27272a' }, ticks: { col
