@@ -19,13 +19,15 @@
       --border: #27272a;
       --success: #10b981;
       --glass: rgba(24, 24, 27, 0.85);
+      --danger: #ef4444;
     }
     
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg); color: var(--text); padding-bottom: 100px; -webkit-font-smoothing: antialiased; }
     
-    header { padding: 40px 20px 20px; background: var(--bg); position: sticky; top: 0; z-index: 10; }
-    h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.5px; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    header { padding: 40px 20px 20px; background: var(--bg); position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.5px; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin:0; }
+    .version-badge { background: #27272a; color: #a1a1aa; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
     
     .container { padding: 0 20px; max-width: 500px; margin: 0 auto; }
     
@@ -49,6 +51,8 @@
     
     button.btn-primary { width: 100%; background: var(--accent-gradient); color: #fff; border: none; border-radius: 12px; padding: 16px; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3); }
     button.btn-primary:active { transform: scale(0.97); }
+
+    button.btn-danger { width: 100%; background: transparent; color: var(--danger); border: 1px solid var(--danger); border-radius: 12px; padding: 12px; font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-top: 10px; }
     
     .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 85px; background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; align-items: flex-start; padding-top: 12px; padding-bottom: env(safe-area-inset-bottom); z-index: 50; }
     .nav-btn { background: none; border: none; color: var(--text-muted); font-size: 0.75rem; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: color 0.2s; }
@@ -64,9 +68,8 @@
     .ex-inputs .input-group { flex: 1; display: flex; flex-direction: column; }
     .ex-inputs label { font-size: 0.65rem; text-align: center; margin-bottom: 6px; }
     
-    .history-item { border-left: 4px solid var(--accent-solid); padding-left: 16px; margin-bottom: 16px; }
+    .history-item { border-left: 4px solid var(--accent-solid); padding-left: 16px; margin-bottom: 16px; overflow: hidden; }
 
-    /* Timer Styles */
     .timer-display { font-size: 2.5rem; font-weight: 800; text-align: center; color: var(--accent-solid); margin-bottom: 12px; font-variant-numeric: tabular-nums; }
     .timer-buttons { display: flex; gap: 10px; justify-content: center; margin-bottom: 8px; }
     .btn-timer { background: transparent; color: var(--text); border: 1px solid var(--accent-solid); border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; flex: 1; }
@@ -77,6 +80,7 @@
 
   <header>
     <h1 id="view-title">Log Workout</h1>
+    <div class="version-badge">v5.0</div>
   </header>
 
   <div class="container">
@@ -129,31 +133,29 @@
         <label>Date</label>
         <input type="date" id="journal-date">
 
-        <!-- Morning Checklist -->
         <label>Morning Directives</label>
         <div class="checkbox-row">
           <input type="checkbox" id="habit-sleep">
-          <span style="font-weight: 500;">Maintained 10 PM - 6 AM Sleep Schedule</span>
+          <span style="font-weight: 500;">Maintained 10 PM - 6 AM Sleep</span>
         </div>
         <div class="checkbox-row" style="margin-bottom: 24px;">
           <input type="checkbox" id="habit-food">
-          <span style="font-weight: 500;">Fresh breakfast with whole eggs (No whey)</span>
+          <span style="font-weight: 500;">Fresh breakfast with whole eggs</span>
         </div>
 
         <label id="energy-label">Energy Level: 7/10</label>
         <input type="range" id="journal-energy" min="1" max="10" value="7" oninput="updateEnergy(this.value)">
 
         <label>Daily Reflection & Posture Log</label>
-        <textarea id="journal-notes" rows="6" placeholder="Notes on posture, core tension, physical stamina, or mental focus..."></textarea>
+        <textarea id="journal-notes" rows="6" placeholder="Notes on posture, core tension, physical stamina..."></textarea>
       </div>
       <button class="btn-primary" onclick="saveJournal()">Save Journal Entry</button>
     </div>
 
     <!-- HISTORY TAB -->
     <div id="tab-history" class="tab-content">
-      <!-- Progress Visualizations -->
       <div class="card">
-        <label>Progress Chart (Load vs. Time)</label>
+        <label>Progress Chart</label>
         <select id="chart-exercise" onchange="updateChart()" style="margin-bottom: 20px;">
           <option value="Plamax Machine Chest Press">Plamax Machine Chest Press</option>
           <option value="Plamax Seated Leg Press">Plamax Seated Leg Press</option>
@@ -165,7 +167,9 @@
       </div>
 
       <div id="history-container"></div>
+      
       <button class="btn-primary" style="background:#27272a; box-shadow:none; margin-top: 10px;" onclick="exportData()">Export Data (JSON)</button>
+      <button class="btn-danger" onclick="emergencyReset()">Emergency App Reset</button>
     </div>
   </div>
 
@@ -176,7 +180,20 @@
   </nav>
 
   <script>
-    // DEFENSIVE DESIGN: Safe LocalStorage Getter
+    // Global Error Catcher - If it crashes, it will tell you exactly why on screen
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+      alert("CRASH DETECTED: " + msg + " (Line " + lineNo + ")");
+      return false;
+    };
+
+    function emergencyReset() {
+      if(confirm("WARNING: This will delete corrupted save data to fix the app. Continue?")) {
+        localStorage.clear();
+        alert("Data cleared. The app will now reload.");
+        window.location.reload();
+      }
+    }
+
     function getSafeLogs() {
       try {
         var data = localStorage.getItem('logs');
@@ -184,7 +201,7 @@
         var parsed = JSON.parse(data);
         return Array.isArray(parsed) ? parsed : [];
       } catch (e) {
-        console.error("Cache read error protected.");
+        console.error("Cache read error");
         return [];
       }
     }
@@ -201,162 +218,174 @@
     var timerInterval;
     var progressChart;
 
-    // DEFENSIVE DESIGN: Safe Date Formatting (No modern padStart)
-    var d = new Date();
-    var mm = ('0' + (d.getMonth() + 1)).slice(-2);
-    var dd = ('0' + d.getDate()).slice(-2);
-    var today = d.getFullYear() + '-' + mm + '-' + dd;
-    
-    document.getElementById('workout-date').value = today;
-    document.getElementById('journal-date').value = today;
+    // Wait for the phone to finish drawing the HTML before running JS
+    document.addEventListener("DOMContentLoaded", function() {
+      try {
+        var d = new Date();
+        var mm = ('0' + (d.getMonth() + 1)).slice(-2);
+        var dd = ('0' + d.getDate()).slice(-2);
+        var today = d.getFullYear() + '-' + mm + '-' + dd;
+        
+        document.getElementById('workout-date').value = today;
+        document.getElementById('journal-date').value = today;
 
-    renderExercises();
+        renderExercises();
+      } catch(e) {
+        alert("Startup Error: " + e.message);
+      }
+    });
 
     function updateEnergy(val) {
       document.getElementById('energy-label').innerText = 'Energy Level: ' + val + '/10';
     }
 
-    // DEFENSIVE DESIGN: Safe Iteration loops instead of modern NodeList.forEach
     function switchTab(tab) {
-      var tabContents = document.querySelectorAll('.tab-content');
-      for (var i = 0; i < tabContents.length; i++) {
-        tabContents[i].classList.remove('active');
-      }
-      
-      var navBtns = document.querySelectorAll('.nav-btn');
-      for (var j = 0; j < navBtns.length; j++) {
-        navBtns[j].classList.remove('active');
-      }
-      
-      document.getElementById('tab-' + tab).classList.add('active');
-      document.getElementById('btn-' + tab).classList.add('active');
-      
-      var titles = { workout: 'Log Workout', journal: 'Daily Journal', history: 'Log & Progress' };
-      document.getElementById('view-title').innerText = titles[tab];
+      try {
+        var tabContents = document.querySelectorAll('.tab-content');
+        for (var i = 0; i < tabContents.length; i++) {
+          tabContents[i].classList.remove('active');
+        }
+        
+        var navBtns = document.querySelectorAll('.nav-btn');
+        for (var j = 0; j < navBtns.length; j++) {
+          navBtns[j].classList.remove('active');
+        }
+        
+        document.getElementById('tab-' + tab).classList.add('active');
+        document.getElementById('btn-' + tab).classList.add('active');
+        
+        var titles = { workout: 'Log Workout', journal: 'Daily Journal', history: 'Log & Progress' };
+        document.getElementById('view-title').innerText = titles[tab];
 
-      if (tab === 'history') {
-        loadHistory();
-        updateChart();
+        if (tab === 'history') {
+          loadHistory();
+          updateChart();
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch(e) {
+        alert("Switch Tab Error: " + e.message);
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function renderExercises() {
-      var split = document.getElementById('workout-split').value;
-      var container = document.getElementById('exercise-list');
-      var routineCard = document.getElementById('routine-container');
-      
-      currentSplitExercises = routines[split];
-
-      if (!currentSplitExercises || currentSplitExercises.length === 0) {
-        routineCard.style.display = 'none';
-        return;
-      }
-
-      routineCard.style.display = 'block';
-      
-      // Find last workout safely
-      var logs = getSafeLogs();
-      var lastWorkout = null;
-      for (var p = 0; p < logs.length; p++) {
-        if (logs[p].type === 'workout' && logs[p].split === split) {
-          lastWorkout = logs[p];
-          break;
-        }
-      }
-
-      var html = '';
-      for (var i = 0; i < currentSplitExercises.length; i++) {
-        var ex = currentSplitExercises[i];
-        var prevText = "No previous data logged.";
+      try {
+        var split = document.getElementById('workout-split').value;
+        var container = document.getElementById('exercise-list');
+        var routineCard = document.getElementById('routine-container');
         
-        if (lastWorkout && lastWorkout.exercises) {
-          for (var k = 0; k < lastWorkout.exercises.length; k++) {
-            if (lastWorkout.exercises[k].name === ex) {
+        currentSplitExercises = routines[split];
+
+        if (!currentSplitExercises || currentSplitExercises.length === 0) {
+          routineCard.style.display = 'none';
+          return;
+        }
+
+        routineCard.style.display = 'block';
+        
+        var logs = getSafeLogs();
+        var lastWorkout = null;
+        for (var p = 0; p < logs.length; p++) {
+          if (logs[p] && logs[p].type === 'workout' && logs[p].split === split) {
+            lastWorkout = logs[p];
+            break;
+          }
+        }
+
+        var html = '';
+        for (var i = 0; i < currentSplitExercises.length; i++) {
+          var ex = currentSplitExercises[i];
+          var prevText = "No previous data logged.";
+          
+          if (lastWorkout && lastWorkout.exercises) {
+            for (var k = 0; k < lastWorkout.exercises.length; k++) {
               var eData = lastWorkout.exercises[k];
-              if (eData.weight || eData.sets || eData.reps) {
-                prevText = 'Last: ' + (eData.weight || '-') + ' | ' + (eData.sets || '-') + ' sets | ' + (eData.reps || '-');
+              if (eData && eData.name === ex) {
+                if (eData.weight || eData.sets || eData.reps) {
+                  prevText = 'Last: ' + (eData.weight || '-') + ' | ' + (eData.sets || '-') + ' sets | ' + (eData.reps || '-');
+                }
+                break;
               }
-              break;
+            }
+          }
+
+          html += '<div class="exercise-item">' +
+                    '<div class="ex-name">' + ex + '</div>' +
+                    '<div class="ex-prev">' + prevText + '</div>' +
+                    '<div class="ex-inputs">' +
+                      '<div class="input-group"><label>Load</label><input type="text" id="w-' + i + '" placeholder="-"></div>' +
+                      '<div class="input-group"><label>Sets</label><input type="number" id="s-' + i + '" placeholder="0"></div>' +
+                      '<div class="input-group"><label>Reps</label><input type="text" id="r-' + i + '" placeholder="-"></div>' +
+                    '</div>' +
+                  '</div>';
+        }
+        container.innerHTML = html;
+      } catch(e) {
+        alert("Render Error: " + e.message);
+      }
+    }
+
+    function saveWorkout() {
+      try {
+        var split = document.getElementById('workout-split').value;
+        var exerciseData = [];
+        
+        if (split !== 'Recovery') {
+          for (var i = 0; i < currentSplitExercises.length; i++) {
+            var weight = document.getElementById('w-' + i).value;
+            var sets = document.getElementById('s-' + i).value;
+            var reps = document.getElementById('r-' + i).value;
+            if (weight || sets || reps) {
+              exerciseData.push({ name: currentSplitExercises[i], weight: weight, sets: sets, reps: reps });
             }
           }
         }
 
-        html += '<div class="exercise-item">' +
-                  '<div class="ex-name">' + ex + '</div>' +
-                  '<div class="ex-prev">' + prevText + '</div>' +
-                  '<div class="ex-inputs">' +
-                    '<div class="input-group"><label>Load/Band</label><input type="text" id="w-' + i + '" placeholder="-"></div>' +
-                    '<div class="input-group"><label>Sets</label><input type="number" id="s-' + i + '" placeholder="0"></div>' +
-                    '<div class="input-group"><label>Reps/Time</label><input type="text" id="r-' + i + '" placeholder="-"></div>' +
-                  '</div>' +
-                '</div>';
-      }
-      container.innerHTML = html;
-    }
+        var entry = {
+          id: new Date().getTime(), 
+          type: 'workout', 
+          date: document.getElementById('workout-date').value,
+          split: split, 
+          exercises: exerciseData, 
+          swim: document.getElementById('workout-swim').checked
+        };
 
-    function saveWorkout() {
-      var split = document.getElementById('workout-split').value;
-      var exerciseData = [];
-      
-      if (split !== 'Recovery') {
-        for (var i = 0; i < currentSplitExercises.length; i++) {
-          var weight = document.getElementById('w-' + i).value;
-          var sets = document.getElementById('s-' + i).value;
-          var reps = document.getElementById('r-' + i).value;
-          if (weight || sets || reps) {
-            exerciseData.push({ name: currentSplitExercises[i], weight: weight, sets: sets, reps: reps });
-          }
-        }
-      }
-
-      var entry = {
-        id: new Date().getTime(), 
-        type: 'workout', 
-        date: document.getElementById('workout-date').value,
-        split: split, 
-        exercises: exerciseData, 
-        swim: document.getElementById('workout-swim').checked
-      };
-
-      try {
         var logs = getSafeLogs();
         logs.unshift(entry);
         localStorage.setItem('logs', JSON.stringify(logs));
-      } catch (e) {
-        alert("Failed to save. Ensure your browser is not in private mode.");
-      }
 
-      renderExercises();
-      document.getElementById('workout-swim').checked = false;
-      try { if (navigator.vibrate) navigator.vibrate(50); } catch(e){}
-      alert('Workout saved successfully!');
+        renderExercises();
+        document.getElementById('workout-swim').checked = false;
+        try { if (navigator.vibrate) navigator.vibrate(50); } catch(e){}
+        alert('Workout saved successfully!');
+      } catch(e) {
+        alert("Save Error: " + e.message);
+      }
     }
 
     function saveJournal() {
-      var entry = {
-        id: new Date().getTime(), 
-        type: 'journal', 
-        date: document.getElementById('journal-date').value,
-        energy: document.getElementById('journal-energy').value, 
-        notes: document.getElementById('journal-notes').value,
-        sleep: document.getElementById('habit-sleep').checked, 
-        food: document.getElementById('habit-food').checked
-      };
-
       try {
+        var entry = {
+          id: new Date().getTime(), 
+          type: 'journal', 
+          date: document.getElementById('journal-date').value,
+          energy: document.getElementById('journal-energy').value, 
+          notes: document.getElementById('journal-notes').value,
+          sleep: document.getElementById('habit-sleep').checked, 
+          food: document.getElementById('habit-food').checked
+        };
+
         var logs = getSafeLogs();
         logs.unshift(entry);
         localStorage.setItem('logs', JSON.stringify(logs));
-      } catch (e) {
-        alert("Failed to save. Ensure your browser is not in private mode.");
-      }
 
-      document.getElementById('journal-notes').value = '';
-      document.getElementById('habit-sleep').checked = false;
-      document.getElementById('habit-food').checked = false;
-      try { if (navigator.vibrate) navigator.vibrate(50); } catch(e){}
-      alert('Journal entry saved successfully!');
+        document.getElementById('journal-notes').value = '';
+        document.getElementById('habit-sleep').checked = false;
+        document.getElementById('habit-food').checked = false;
+        try { if (navigator.vibrate) navigator.vibrate(50); } catch(e){}
+        alert('Journal entry saved successfully!');
+      } catch(e) {
+        alert("Journal Save Error: " + e.message);
+      }
     }
 
     function startTimer(seconds) {
@@ -384,54 +413,16 @@
     }
 
     function updateChart() {
-      if (typeof Chart === 'undefined') return; 
+      try {
+        if (typeof Chart === 'undefined') return; 
 
-      var exName = document.getElementById('chart-exercise').value;
-      var logs = getSafeLogs().reverse(); 
-      
-      var labels = [];
-      var dataPoints = [];
+        var exName = document.getElementById('chart-exercise').value;
+        var logs = getSafeLogs().reverse(); 
+        
+        var labels = [];
+        var dataPoints = [];
 
-      for (var i = 0; i < logs.length; i++) {
-        var log = logs[i];
-        if (log.type === 'workout' && log.exercises) {
-          for (var j = 0; j < log.exercises.length; j++) {
-            if (log.exercises[j].name.indexOf(exName) !== -1) {
-              var ex = log.exercises[j];
-              if (ex.weight) {
-                var numWeight = parseFloat(ex.weight);
-                if (!isNaN(numWeight)) {
-                  labels.push(log.date.substring(5));
-                  dataPoints.push(numWeight);
-                }
-              }
-            }
-          }
-        }
-      }
-
-      if (progressChart) progressChart.destroy();
-
-      var ctx = document.getElementById('progressChart').getContext('2d');
-      progressChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels.length ? labels : ['No Data'],
-          datasets: [{
-            label: 'Load Progression',
-            data: dataPoints.length ? dataPoints : [0],
-            borderColor: '#8b5cf6',
-            backgroundColor: 'rgba(139, 92, 246, 0.1)',
-            borderWidth: 3,
-            pointBackgroundColor: '#10b981',
-            pointRadius: 4,
-            tension: 0.3,
-            fill: true
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { grid: { color: '#27272a' }, ticks: { color: '#a1a1aa' }, beginAtZero: false },
-            x: { grid: { color: '#27272a' }, ticks: { col
+        for (var i = 0; i < logs.length; i++) {
+          var log = logs[i];
+          if (log && log.type === 'workout' && log.exercises) {
+            for (var j = 0; j < log.exerci
