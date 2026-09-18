@@ -5,55 +5,175 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Tracker">
-  <title>Workout & Journal</title>
+  <meta name="apple-mobile-web-app-title" content="AuraFit">
+  <title>Premium Workout & Journal</title>
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --accent: #38bdf8;
-      --accent-active: #0ea5e9;
+      --bg: #09090b; /* Deep OLED black */
+      --card: #18181b; /* Rich zinc */
+      --card-hover: #27272a;
+      --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      --accent-solid: #8b5cf6;
       --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --border: #334155;
-      --highlight: #2dd4bf;
+      --text-muted: #a1a1aa;
+      --border: #27272a;
+      --success: #10b981;
+      --glass: rgba(24, 24, 27, 0.85);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding-bottom: 90px; }
-    header { padding: 24px 20px 12px; background: var(--card); border-bottom: 1px solid var(--border); }
-    h1 { font-size: 1.25rem; font-weight: 700; }
-    .container { padding: 16px 20px; max-width: 500px; margin: 0 auto; }
-    .tab-content { display: none; }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 100px; -webkit-font-smoothing: antialiased; }
+    
+    header { 
+      padding: 40px 20px 20px; 
+      background: var(--bg); 
+      position: sticky; 
+      top: 0; 
+      z-index: 10;
+    }
+    h1 { 
+      font-size: 1.75rem; 
+      font-weight: 800; 
+      letter-spacing: -0.5px;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .container { padding: 0 20px; max-width: 500px; margin: 0 auto; }
+    
+    /* Animations */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .tab-content { display: none; animation: fadeIn 0.3s ease-out forwards; }
     .tab-content.active { display: block; }
     
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-    label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    /* Cards */
+    .card { 
+      background: var(--card); 
+      border: 1px solid var(--border); 
+      border-radius: 16px; 
+      padding: 20px; 
+      margin-bottom: 20px; 
+      box-shadow: 0 4px 24px -8px rgba(0,0,0,0.5);
+    }
+    
+    label { 
+      display: block; 
+      font-size: 0.75rem; 
+      font-weight: 700; 
+      color: var(--text-muted); 
+      margin-bottom: 8px; 
+      text-transform: uppercase; 
+      letter-spacing: 1px; 
+    }
+    
+    /* Inputs */
     input[type="text"], input[type="number"], input[type="date"], select, textarea {
-      width: 100%; background: #0b1120; border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px 12px; font-size: 1rem; margin-bottom: 12px; outline: none;
+      width: 100%; 
+      background: #000; 
+      border: 1px solid var(--border); 
+      border-radius: 12px; 
+      color: var(--text); 
+      padding: 14px 16px; 
+      font-size: 1rem; 
+      margin-bottom: 16px; 
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none; /* Removes default iOS styling */
     }
-    input[type="range"] { width: 100%; margin: 8px 0; accent-color: var(--accent); }
-    .checkbox-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; cursor: pointer; }
-    .checkbox-row input { width: 20px; height: 20px; accent-color: var(--accent); }
     
-    button.btn-primary {
-      width: 100%; background: var(--accent); color: #0f172a; border: none; border-radius: 8px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s;
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent-solid);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
     }
-    button.btn-primary:active { background: var(--accent-active); }
-    
-    .nav-bar {
-      position: fixed; bottom: 0; left: 0; right: 0; height: 70px; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom);
-    }
-    .nav-btn { background: none; border: none; color: var(--text-muted); font-size: 0.8rem; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
-    .nav-btn.active { color: var(--accent); font-weight: 700; }
-    .history-item { border-left: 3px solid var(--accent); padding-left: 12px; margin-bottom: 14px; }
 
-    .exercise-item { background: #0b1120; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; }
-    .ex-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
-    .ex-prev { font-size: 0.8rem; color: var(--highlight); margin-bottom: 8px; font-weight: 500; }
-    .ex-inputs { display: flex; gap: 8px; }
-    .ex-inputs input { margin-bottom: 0; padding: 8px; text-align: center; }
-    .ex-inputs .input-group { flex: 1; display: flex; flex-direction: column; align-items: center; }
-    .ex-inputs label { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; letter-spacing: 0; }
+    /* Custom Select Arrow */
+    select {
+      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px top 50%;
+      background-size: 10px auto;
+    }
+    
+    /* Range Slider */
+    input[type="range"] { 
+      width: 100%; 
+      margin: 12px 0 24px; 
+      accent-color: var(--accent-solid); 
+    }
+    
+    /* Checkbox */
+    .checkbox-row { display: flex; align-items: center; gap: 12px; margin: 8px 0; cursor: pointer; }
+    .checkbox-row input { 
+      width: 24px; height: 24px; 
+      accent-color: var(--success); 
+      border-radius: 6px;
+    }
+    
+    /* Buttons */
+    button.btn-primary {
+      width: 100%; 
+      background: var(--accent-gradient); 
+      color: #fff; 
+      border: none; 
+      border-radius: 12px; 
+      padding: 16px; 
+      font-size: 1.05rem; 
+      font-weight: 700; 
+      cursor: pointer; 
+      transition: transform 0.1s, opacity 0.2s;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+    button.btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+    
+    /* Navigation Bar */
+    .nav-bar {
+      position: fixed; 
+      bottom: 0; left: 0; right: 0; 
+      height: 85px; 
+      background: var(--glass); 
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255,255,255,0.05); 
+      display: flex; justify-content: space-around; align-items: flex-start; 
+      padding-top: 12px;
+      padding-bottom: env(safe-area-inset-bottom);
+      z-index: 50;
+    }
+    .nav-btn { 
+      background: none; border: none; 
+      color: var(--text-muted); 
+      font-size: 0.75rem; 
+      font-weight: 600;
+      display: flex; flex-direction: column; align-items: center; gap: 6px; 
+      cursor: pointer; 
+      transition: color 0.2s;
+    }
+    .nav-btn span.icon { font-size: 1.5rem; filter: grayscale(100%) opacity(0.6); transition: filter 0.2s; }
+    .nav-btn.active { color: var(--text); }
+    .nav-btn.active span.icon { filter: grayscale(0%) opacity(1); }
+    
+    /* Exercise List Styling */
+    .exercise-item { 
+      background: #000; 
+      padding: 16px; 
+      border-radius: 12px; 
+      border: 1px solid var(--border); 
+      margin-bottom: 16px; 
+    }
+    .ex-name { font-weight: 700; font-size: 1rem; margin-bottom: 4px; color: var(--text); }
+    .ex-prev { font-size: 0.8rem; color: var(--success); margin-bottom: 12px; font-weight: 500; }
+    .ex-inputs { display: flex; gap: 12px; }
+    .ex-inputs input { margin-bottom: 0; padding: 10px; text-align: center; font-weight: 600; font-size: 1.1rem; }
+    .ex-inputs .input-group { flex: 1; display: flex; flex-direction: column; }
+    .ex-inputs label { font-size: 0.65rem; text-align: center; margin-bottom: 6px; }
+
+    /* History Items */
+    .history-item { 
+      border-left: 4px solid var(--accent-solid); 
+      padding-left: 16px; 
+      margin-bottom: 16px; 
+    }
   </style>
 </head>
 <body>
@@ -71,10 +191,10 @@
 
         <label>Session Type</label>
         <select id="workout-split" onchange="renderExercises()">
-          <option value="Morning Day A">☀️ Morning Day A (Upper Posture)</option>
-          <option value="Morning Day B">☀️ Morning Day B (Lower Mobility/Core)</option>
-          <option value="Gym Day A">🏋️ Gym Day A (Upper Posture/Core)</option>
-          <option value="Gym Day B">🏋️ Gym Day B (Legs/Arms)</option>
+          <option value="Morning Day A">Morning Day A (Upper Posture)</option>
+          <option value="Morning Day B">Morning Day B (Lower Mobility/Core)</option>
+          <option value="Gym Day A">Gym Day A (Upper Posture/Core)</option>
+          <option value="Gym Day B">Gym Day B (Legs/Arms)</option>
           <option value="Recovery">Active Recovery / Rest</option>
         </select>
       </div>
@@ -90,7 +210,7 @@
         <label>Recovery Tracking</label>
         <div class="checkbox-row">
           <input type="checkbox" id="workout-swim">
-          <span>Completed 30-min Recovery Swim</span>
+          <span style="font-weight: 600; font-size: 0.95rem;">Completed 30-min Recovery Swim</span>
         </div>
       </div>
       
@@ -115,47 +235,23 @@
     <!-- HISTORY TAB -->
     <div id="tab-history" class="tab-content">
       <div id="history-container"></div>
-      <button class="btn-primary" style="background:#475569; margin-top: 10px;" onclick="exportData()">Export Data (JSON)</button>
+      <button class="btn-primary" style="background:#27272a; box-shadow:none; margin-top: 10px;" onclick="exportData()">Export Data (JSON)</button>
     </div>
   </div>
 
   <nav class="nav-bar">
-    <button class="nav-btn active" onclick="switchTab('workout')">🏋️<span>Workout</span></button>
-    <button class="nav-btn" onclick="switchTab('journal')">📖<span>Journal</span></button>
-    <button class="nav-btn" onclick="switchTab('history')">📊<span>History</span></button>
+    <button class="nav-btn active" onclick="switchTab('workout')"><span class="icon">🏋️</span>Workout</button>
+    <button class="nav-btn" onclick="switchTab('journal')"><span class="icon">📖</span>Journal</button>
+    <button class="nav-btn" onclick="switchTab('history')"><span class="icon">📊</span>History</button>
   </nav>
 
   <script>
-    // New Routines based on your specified template
+    // Data Structure
     const routines = {
-      "Morning Day A": [
-        "Thoracic Spine Foam Rolling (Release)", 
-        "Cat-Cow Stretches (Mobility)", 
-        "Wall Angels (Mobility)", 
-        "Banded Pull-Aparts (Activation)", 
-        "Banded Face Pulls (Activation)"
-      ],
-      "Morning Day B": [
-        "IT Band & Quad Foam Rolling (Release)", 
-        "90/90 Hip Stretches (Mobility)", 
-        "Glute Bridges (Mobility)", 
-        "Banded Squats (Activation)", 
-        "Forearm Plank (Activation)"
-      ],
-      "Gym Day A": [
-        "Lat Pulldown Machine (Upper back width)", 
-        "Cable Crossover / Low Row (Posture)", 
-        "Plamax Machine Chest Press (Slow stretch)", 
-        "Hyperextension Bench (Lower back endurance)", 
-        "Incline Treadmill Walk (Leg/lung stamina)"
-      ],
-      "Gym Day B": [
-        "Plamax Seated Leg Press (Foundational strength)", 
-        "Dumbbell RDLs (Hamstring stretch)", 
-        "Plamax Leg Curls (Knee stability)", 
-        "Dumbbell Hammer Curls (Grip strength)", 
-        "Elliptical Machine (Flush lactic acid)"
-      ],
+      "Morning Day A": ["Thoracic Spine Foam Rolling (Release)", "Cat-Cow Stretches (Mobility)", "Wall Angels (Mobility)", "Banded Pull-Aparts (Activation)", "Banded Face Pulls (Activation)"],
+      "Morning Day B": ["IT Band & Quad Foam Rolling (Release)", "90/90 Hip Stretches (Mobility)", "Glute Bridges (Mobility)", "Banded Squats (Activation)", "Forearm Plank (Activation)"],
+      "Gym Day A": ["Lat Pulldown Machine (Upper back width)", "Cable Crossover / Low Row (Posture)", "Plamax Machine Chest Press (Slow stretch)", "Hyperextension Bench (Lower back endurance)", "Incline Treadmill Walk (Leg/lung stamina)"],
+      "Gym Day B": ["Plamax Seated Leg Press (Foundational strength)", "Dumbbell RDLs (Hamstring stretch)", "Plamax Leg Curls (Knee stability)", "Dumbbell Hammer Curls (Grip strength)", "Elliptical Machine (Flush lactic acid)"],
       "Recovery": []
     };
 
@@ -182,6 +278,9 @@
       document.getElementById('view-title').innerText = titles[tab];
 
       if (tab === 'history') loadHistory();
+      
+      // Scroll to top when switching tabs smoothly
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function getLastWorkout(split) {
@@ -242,8 +341,8 @@
 
     function saveWorkout() {
       const split = document.getElementById('workout-split').value;
-      
       const exerciseData = [];
+      
       if (split !== 'Recovery') {
         currentSplitExercises.forEach((ex, index) => {
           const weight = document.getElementById(`w-${index}`).value;
@@ -270,7 +369,10 @@
 
       renderExercises();
       document.getElementById('workout-swim').checked = false;
-      alert('Workout saved locally!');
+      
+      // Haptic feedback if supported
+      if (navigator.vibrate) navigator.vibrate(50);
+      alert('Workout saved successfully!');
     }
 
     function saveJournal() {
@@ -287,7 +389,8 @@
       localStorage.setItem('logs', JSON.stringify(logs));
 
       document.getElementById('journal-notes').value = '';
-      alert('Journal entry saved locally!');
+      if (navigator.vibrate) navigator.vibrate(50);
+      alert('Journal entry saved successfully!');
     }
 
     function loadHistory() {
@@ -295,7 +398,7 @@
       const logs = JSON.parse(localStorage.getItem('logs') || '[]');
       
       if (logs.length === 0) {
-        container.innerHTML = '<p style="color:var(--text-muted); text-align:center;">No entries saved yet.</p>';
+        container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 40px 0;">No entries saved yet.</p>';
         return;
       }
 
@@ -304,23 +407,23 @@
           let exHtml = '';
           if (item.exercises && item.exercises.length > 0) {
             exHtml = item.exercises.map(e => 
-              `<div>• <span style="color:#94a3b8">${e.name.split('(')[0].trim()}:</span> <strong>${e.weight || 'BW'}</strong> (${e.sets || '-'} x ${e.reps || '-'})</div>`
+              `<div style="margin-bottom: 4px;">• <span style="color:var(--text-muted)">${e.name.split('(')[0].trim()}:</span> <strong>${e.weight || 'BW'}</strong> (${e.sets || '-'} x ${e.reps || '-'})</div>`
             ).join('');
           }
 
           return `
             <div class="card history-item">
-              <div style="font-size:0.8rem; color:var(--text-muted);">${item.date} • WORKOUT</div>
-              <strong style="color:var(--accent); display:block; margin: 4px 0;">${item.split}</strong>
-              <div style="font-size:0.9rem; color:var(--text); line-height: 1.4;">${exHtml || 'No specific exercises logged'}</div>
-              ${item.swim ? '<div style="margin-top:8px; font-size:0.85rem; color:#4ade80;">✓ 30-min Swim Logged</div>' : ''}
+              <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; letter-spacing:1px;">${item.date} • WORKOUT</div>
+              <strong style="color:var(--accent-solid); display:block; margin: 8px 0; font-size:1.1rem;">${item.split}</strong>
+              <div style="font-size:0.95rem; color:var(--text); line-height: 1.5;">${exHtml || 'No specific exercises logged'}</div>
+              ${item.swim ? '<div style="margin-top:12px; font-size:0.85rem; color:var(--success); font-weight:600;">✓ 30-min Swim Logged</div>' : ''}
             </div>`;
         } else {
           return `
-            <div class="card history-item" style="border-left-color: #a78bfa;">
-              <div style="font-size:0.8rem; color:var(--text-muted);">${item.date} • JOURNAL</div>
-              <strong style="display:block; margin: 4px 0;">Energy: ${item.energy}/10</strong>
-              <p style="white-space:pre-wrap; font-size:0.9rem;">${item.notes || 'No notes'}</p>
+            <div class="card history-item" style="border-left-color: var(--success);">
+              <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; letter-spacing:1px;">${item.date} • JOURNAL</div>
+              <strong style="display:block; margin: 8px 0; font-size:1.1rem;">Energy: ${item.energy}/10</strong>
+              <p style="white-space:pre-wrap; font-size:0.95rem; line-height: 1.5; color:var(--text-muted);">${item.notes || 'No notes'}</p>
             </div>`;
         }
       }).join('');
