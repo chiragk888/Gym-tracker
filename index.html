@@ -6,7 +6,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="AuraFit">
+  <meta name="theme-color" content="#09090b">
+  
   <title>AuraFit - Premium Workout & Journal</title>
+
+  <!-- PWA Apple Touch Icon & Manifest -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%2309090b'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='280'%3E🏋️%3C/text%3E%3C/svg%3E">
+  <link rel="manifest" id="pwa-manifest">
+
   <style>
     :root {
       --bg: #09090b; --card: #18181b; 
@@ -65,22 +72,29 @@
     .timer-buttons { display: flex; gap: 10px; justify-content: center; margin-bottom: 8px; }
     .btn-timer { background: transparent; color: var(--text); border: 1px solid var(--accent-solid); border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; flex: 1; }
 
-    /* Canvas Progress Chart */
     #chartCanvas { width: 100%; height: 180px; background: #000; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 12px; }
-
-    /* Toast Notifications */
     .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: #27272a; color: #fff; padding: 12px 24px; border-radius: 30px; font-size: 0.9rem; font-weight: 600; border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 100; transition: transform 0.3s ease-out; opacity: 0; }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* PWA Install Banner */
+    .pwa-banner { display: none; background: var(--card); border: 1px solid var(--accent-solid); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; align-items: center; justify-content: space-between; gap: 12px; }
+    .pwa-banner.active { display: flex; }
   </style>
 </head>
 <body>
 
   <header>
     <h1 id="view-title">Log Workout</h1>
-    <div class="version-badge">v6.5 Dynamic</div>
+    <div class="version-badge">v7.0 PWA</div>
   </header>
 
   <div class="container">
+    <!-- PWA Installation Prompt -->
+    <div id="pwa-install-banner" class="pwa-banner">
+      <span style="font-size: 0.85rem; font-weight: 600;">Install AuraFit as a native app</span>
+      <button class="btn-primary" style="width: auto; padding: 8px 16px; margin: 0; font-size: 0.8rem;" onclick="installPWA()">Install</button>
+    </div>
+
     <!-- WORKOUT TAB -->
     <div id="tab-workout" class="tab-content active">
       <div class="card">
@@ -180,6 +194,66 @@
   <div id="toast" class="toast">Action completed</div>
 
   <script>
+    /* --- PWA MANIFEST & SERVICE WORKER INITIALIZATION --- */
+    (function initPWA() {
+      // 1. Generate Web App Manifest dynamically via Data URI
+      var manifestData = {
+        name: "AuraFit Workout & Journal",
+        short_name: "AuraFit",
+        description: "Offline Premium Workout and Journal Tracker",
+        start_url: "./",
+        display: "standalone",
+        background_color: "#09090b",
+        theme_color: "#09090b",
+        icons: [{
+          src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%2309090b'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='280'%3E🏋️%3C/text%3E%3C/svg%3E",
+          sizes: "512x512",
+          type: "image/svg+xml",
+          purpose: "any maskable"
+        }]
+      };
+      var manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+      document.getElementById('pwa-manifest').href = URL.createObjectURL(manifestBlob);
+
+      // 2. Register Service Worker for full offline capabilities
+      if ('serviceWorker' in navigator) {
+        var swCode = `
+          const CACHE_NAME = 'aurafit-v7';
+          self.addEventListener('install', (e) => {
+            e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(['./'])));
+            self.skipWaiting();
+          });
+          self.addEventListener('activate', (e) => {
+            e.waitUntil(caches.keys().then((keys) => Promise.all(keys.map((k) => k !== CACHE_NAME && caches.delete(k)))));
+            self.clients.claim();
+          });
+          self.addEventListener('fetch', (e) => {
+            e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request)));
+          });
+        `;
+        var swBlob = new Blob([swCode], { type: 'application/javascript' });
+        navigator.serviceWorker.register(URL.createObjectURL(swBlob), { scope: './' }).catch(function(){});
+      }
+    })();
+
+    var deferredPrompt;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('pwa-install-banner').classList.add('active');
+    });
+
+    function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function() {
+          document.getElementById('pwa-install-banner').classList.remove('active');
+          deferredPrompt = null;
+        });
+      }
+    }
+
+    /* --- APPLICATION LOGIC --- */
     window.onerror = function(msg) { showToast("Error: " + msg); return false; };
 
     function showToast(msg) {
@@ -399,12 +473,10 @@
       var graphW = w - padLeft - padRight;
       var graphH = h - padTop - padBottom;
 
-      // Draw horizontal line grid
       ctx.strokeStyle = '#27272a'; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(padLeft, padTop); ctx.lineTo(w - padRight, padTop); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(padLeft, h - padBottom); ctx.lineTo(w - padRight, h - padBottom); ctx.stroke();
 
-      // Draw line path
       ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 3;
       ctx.beginPath();
       for (var k = 0; k < dataPoints.length; k++) {
@@ -414,7 +486,6 @@
       }
       ctx.stroke();
 
-      // Draw data points & labels
       for (var m = 0; m < dataPoints.length; m++) {
         var px = padLeft + (dataPoints.length === 1 ? graphW / 2 : (m / (dataPoints.length - 1)) * graphW);
         var py = h - padBottom - ((dataPoints[m].val - minVal) / (maxVal - minVal)) * graphH;
